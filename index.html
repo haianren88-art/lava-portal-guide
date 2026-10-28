@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LAVA STUDIO 应用台 · 五步复刻指南</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --line:#30363d; --txt:#e6edf3; --dim:#8b949e;
+    --acc:#58a6ff; --ok:#3fb950; --warn:#d29922; --code:#0a0e14;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--txt);font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.75}
+  .wrap{max-width:880px;margin:0 auto;padding:48px 24px 80px}
+  header{text-align:center;padding:36px 0 28px}
+  header h1{font-size:34px;font-weight:700;letter-spacing:1px}
+  header h1 span{color:var(--acc)}
+  header p{color:var(--dim);margin-top:12px;font-size:15px}
+  .badges{margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .badge{font-size:12.5px;padding:4px 14px;border:1px solid var(--line);border-radius:99px;color:var(--dim)}
+  .badge b{color:var(--ok);font-weight:600}
+  /* OS 切换 */
+  .os-switch{display:flex;justify-content:center;gap:0;margin:30px 0 8px;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;margin-left:auto;margin-right:auto}
+  .os-switch button{background:transparent;color:var(--dim);border:none;padding:10px 34px;font-size:15px;cursor:pointer}
+  .os-switch button.on{background:var(--acc);color:#0d1117;font-weight:600}
+  .os-note{display:none;text-align:center;color:var(--warn);font-size:13.5px;margin-bottom:20px}
+  .os-note.show{display:block}
+  /* 步骤卡片 */
+  .step{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px 28px;margin-top:26px}
+  .step h2{font-size:20px;display:flex;align-items:center;gap:12px}
+  .step h2 .n{flex:0 0 auto;width:32px;height:32px;border-radius:50%;background:var(--acc);color:#0d1117;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700}
+  .step .where{font-size:13px;color:var(--dim);margin-top:4px;margin-left:44px}
+  .step p,.step li{font-size:14.5px;color:var(--txt)}
+  .step ol{margin:14px 0 0 44px;display:grid;gap:10px}
+  .step ul{margin:10px 0 0 44px;display:grid;gap:6px;color:var(--dim)}
+  .step ul li{color:var(--dim)}
+  code{background:var(--code);border:1px solid var(--line);border-radius:5px;padding:1px 7px;font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace;color:#79c0ff}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:9px;padding:14px 18px;margin:12px 0 4px;overflow-x:auto}
+  pre code{background:none;border:none;padding:0;color:#a5d6ff;font-size:13px;white-space:pre}
+  .cmt{color:#7ee787}
+  .tip{margin-top:14px;margin-left:44px;padding:10px 16px;border-left:3px solid var(--warn);background:rgba(210,153,34,.08);border-radius:0 8px 8px 0;font-size:13.5px;color:var(--dim)}
+  .tip b{color:var(--warn)}
+  table{border-collapse:collapse;margin:14px 0 0 44px;font-size:13.5px;width:calc(100% - 44px)}
+  th,td{border:1px solid var(--line);padding:7px 12px;text-align:left}
+  th{color:var(--dim);font-weight:500;background:var(--code)}
+  details{margin-top:12px;margin-left:44px;border:1px solid var(--line);border-radius:9px;padding:10px 16px}
+  details summary{cursor:pointer;font-size:14px;color:var(--txt)}
+  details p{margin-top:8px;font-size:13.5px;color:var(--dim)}
+  footer{text-align:center;color:var(--dim);font-size:13px;margin-top:56px;border-top:1px solid var(--line);padding-top:24px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>LAVA STUDIO 应用台 · <span>五步复刻指南</span></h1>
+    <p>把任意一台全新 LAVA STUDIO 做成全屏应用台 —— 壳模式免 ADB、壁纸库、强杀应用、四款屏保时钟、新装软件自动上架</p>
+    <div class="badges">
+      <div class="badge"><b>✓</b> 实测通过</div>
+      <div class="badge">macOS / Windows 双平台</div>
+      <div class="badge">不依赖具体软件名</div>
+      <div class="badge">断电重启可用</div>
+    </div>
+  </header>
+
+  <div class="os-switch" id="osSwitch">
+    <button class="on" data-os="mac"> macOS</button>
+    <button data-os="win"> Windows</button>
+  </div>
+  <div class="os-note" id="osNote">Windows 用户：所有命令在 <b>Git Bash</b> 中执行（装 Git for Windows 自带），不要用 CMD / PowerShell。</div>
+
+  <div class="step">
+    <h2><span class="n">0</span>准备（电脑只做一次）</h2>
+    <div class="where">在哪操作：电脑</div>
+    <table>
+      <tr><th>依赖</th><th class="os-mac">macOS</th><th class="os-win" style="display:none">Windows</th></tr>
+      <tr>
+        <td>adb</td>
+        <td class="os-mac"><code>brew install --cask android-platform-tools</code></td>
+        <td class="os-win" style="display:none"><code>winget install Google.PlatformTools</code>（或解压 platform-tools 加入 PATH）</td>
+      </tr>
+      <tr>
+        <td>Python 3.9+</td>
+        <td class="os-mac">官网 / brew 安装</td>
+        <td class="os-win" style="display:none">官网安装，<b>勾选 Add to PATH</b></td>
+      </tr>
+      <tr>
+        <td>JDK 11+ / SDK（第 3、4 步用）</td>
+        <td class="os-mac" colspan="2" style="display:table-cell">Android Studio 自带（脚本自动识别两平台的工具链，含 Windows 的 .exe 与 AppData 路径）</td>
+      </tr>
+    </table>
+    <div class="tip">设备要求：Android 7.0+，与电脑同一局域网，先用<b>数据线</b>（非充电线）连接。</div>
+  </div>
+
+  <div class="step">
+    <h2><span class="n">1</span>Via 地址打开设置，手动打开 ADB</h2>
+    <div class="where">在哪操作：设备 Via 浏览器 + 电脑</div>
+    <ol>
+      <li>电脑上起设置跳转页服务：
+        <pre><code>python3 adb_page/lava_server.py   <span class="cmt"># 端口 8000（Windows 用 python）</span></code></pre>
+      </li>
+      <li>设备打开 <b>Via 浏览器</b>，地址栏输入电脑局域网地址（如 <code>192.168.31.36:8000</code>），点 <b>「③ 直达主设置界面」</b>（开发者选项直达按钮在本机无效，勿用）。</li>
+      <li>在设置里进入<b>开发者选项</b>，手动打开 <b>USB 调试</b>（没有开发者选项就先去「关于设备」连点「版本号」7 次）。</li>
+      <li>电脑上确认连接并打开网络 ADB：
+        <pre><code>adb devices          <span class="cmt"># 首次弹授权框勾选「始终允许」</span>
+./setup.sh device    <span class="cmt"># 自动开 5555 → 读设备 IP → 切 WiFi ADB</span></code></pre>
+      </li>
+    </ol>
+    <div class="tip">设备重启后 5555 会关闭（固件限制、无 root 不能自启），插一次 USB 重跑 <code>./setup.sh device</code> 即可。装好壳后日常使用不再依赖 ADB。</div>
+  </div>
+
+  <div class="step">
+    <h2><span class="n">2</span>Via 生成应用台（含全部优化）</h2>
+    <div class="where">在哪操作：电脑起服务，设备 Via 打开</div>
+    <ol>
+      <li>电脑上起应用台服务：
+        <pre><code>./setup.sh serve -d   <span class="cmt"># 后台常驻，打印 http://&lt;电脑IP&gt;:8900/</span></code></pre>
+        首次启动自动建虚拟环境、装依赖、生成 10 张内置壁纸。
+      </li>
+      <li>设备 Via 打开打印出的地址（建议设为 Via 主页）。装壳后<b>桌面图标是主入口</b>，Via 作备用通道。</li>
+      <li><b>USB 调试自动恢复</b>（一次性授权，装完第 3 步的壳后生效）：
+        <pre><code>adb shell pm grant com.apple.android.music android.permission.WRITE_SECURE_SETTINGS</code></pre>
+        每次打开应用台，壳自动把被关掉的 USB 调试开关拉回来（<code>./setup.sh shell</code> 会自动执行此授权）。
+      </li>
+    </ol>
+    <ul>
+      <li>壁纸：必应每日 / 10 张内置 / 手机扫码上传，网格切换、可删上传</li>
+      <li>我的最爱居中置顶，长按图标快速加/删；「全部应用」「系统设置」折叠展开</li>
+      <li>强杀应用：两段确认强制结束进程，运行中应用红框高亮</li>
+      <li>屏保：5/10/20/30 分钟、1 小时可选；遮罩三档；四款时钟（翻页 / 极简数字 / 表盘 / 中文文字钟），24 小时制</li>
+      <li>启动三级兜底（壳桥 → ADB → 系统 intent）；RK3399 级性能优化；页面 30 秒自动更新</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <h2><span class="n">3</span>用系统自带 Apple Music 换壳成应用台</h2>
+    <div class="where">在哪操作：电脑一条命令</div>
+    <pre><code>./setup.sh shell --pkg com.apple.android.music</code></pre>
+    <p style="margin-top:10px">脚本自动完成：<b>备份原 APK</b> → 写入服务地址 → 构建 → 签名 → 安装 → 授予 WRITE_SECURE_SETTINGS。
+    完成后点桌面「Apple Music」图标就是应用台（壳模式 · 免 ADB，断电重启可用）。</p>
+    <ul>
+      <li>非交互：<code>./setup.sh shell --pkg com.apple.android.music --ip 192.168.31.36</code></li>
+      <li>顶替其他系统应用：把 <code>--pkg</code> 换成设备上已存在的包名</li>
+      <li>还原原版：<code>adb install -r backup/com.apple.android.music-&lt;时间&gt;.apk</code></li>
+      <li>注意：部分定制桌面按包名硬编码图标名，改壳显示名不会生效（不影响使用）</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <h2><span class="n">4</span>用白名单槽位方式安装其他软件</h2>
+    <div class="where">在哪操作：电脑一条命令一个 APK</div>
+    <p style="margin-top:10px">LAVA 桌面会强杀「固件不认识」的应用（启动约 0.1 秒被杀）。唯一可靠的办法：把 APK <b>改包名成固件白名单里的包名（槽位）</b>再安装：</p>
+    <pre><code>./install_app.sh 某个应用.apk                    <span class="cmt"># 自动挑空槽位</span>
+./install_app.sh 某个应用.apk --pkg &lt;槽位&gt;       <span class="cmt"># 指定槽位</span>
+./install_app.sh 某个应用.apk --yes              <span class="cmt"># 免确认</span></code></pre>
+    <ul>
+      <li>自动流程：读包名 → apktool 解包 → 补全相对类名 → 全局替换包名 → 重打包 → 签名 → 安装 → 5 秒启动验证</li>
+      <li>槽位规则：一个槽位 = 一个固件认识且未装的包名（如 <code>com.lavamusic.me.rank</code>）；<b>不要用自造包名</b>，必被杀</li>
+      <li>槽位用完就卸一个不用的应用腾出包名；加壳 APK（dex2c / 360 / 乐固等）重签后必崩，不能用此流程</li>
+      <li>普通设备（无白名单固件）直接 <code>adb install -r xx.apk</code></li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <h2><span class="n">5</span>安装的软件自动添加到应用台</h2>
+    <div class="where">在哪操作：无需操作，自动完成</div>
+    <ul style="margin-left:44px">
+      <li>服务后台每 30 秒扫描一次，新装应用 <b>30 秒内自动出现</b>，名字和图标自动抓取</li>
+      <li>应用列表增量缓存，服务重启不丢；卸载的应用自动消失</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <h2><span class="n">?</span>常见问题</h2>
+    <details><summary>应用台打开白屏 / 转圈</summary><p>电脑服务没起（<code>lsof -i:8900</code> 或任务管理器查 python），或电脑 IP 变了（路由器 DHCP 固定电脑 IP；或重跑 <code>./setup.sh shell --ip 新IP</code>）。</p></details>
+    <details><summary>设备重启后 5555 连不上</summary><p>固件级限制：USB 调试开关打开应用台会自动恢复（需已授权），但 5555 端口必须插 USB 跑一次 <code>./setup.sh device</code>。</p></details>
+    <details><summary>覆盖安装失败（签名不一致）</summary><p><code>adb uninstall &lt;包名&gt;</code> 后重装；原应用可从 backup/ 装回。</p></details>
+    <details><summary>电脑重启后</summary><p>手动跑一次 <code>./setup.sh serve -d</code>（Windows 在 Git Bash 里跑）。</p></details>
+  </div>
+
+  <footer>
+    LAVA STUDIO 应用台复刻指南 · 以最终可行版本为准 · 适配 macOS / Windows（Git Bash）<br>
+    完整工具包：lava-portal-kit.zip（setup.sh / install_app.sh / 应用台服务 / 壳工程）
+  </footer>
+</div>
+<script>
+  var sw=document.getElementById('osSwitch'), note=document.getElementById('osNote');
+  sw.addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b) return;
+    sw.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b)});
+    var win=b.dataset.os==='win';
+    note.classList.toggle('show',win);
+    document.querySelectorAll('.os-mac').forEach(function(x){x.style.display=win?'none':''});
+    document.querySelectorAll('.os-win').forEach(function(x){x.style.display=win?'':'none'});
+  });
+</script>
+</body>
+</html>
