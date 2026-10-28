@@ -105,7 +105,7 @@
 ./setup.sh device    <span class="cmt"># 自动开 5555 → 读设备 IP → 切 WiFi ADB</span></code></pre>
       </li>
     </ol>
-    <div class="tip">设备重启后 5555 会关闭（固件限制、无 root 不能自启），插一次 USB 重跑 <code>./setup.sh device</code> 即可。装好壳后日常使用不再依赖 ADB。</div>
+    <div class="tip">设备重启后 5555 会关闭（固件限制、无 root 不能自启）。装一次看门狗就不用再管：<code>./setup.sh watchdog</code>（macOS 常驻任务，每 20 秒检查、Mac 重启后自动运行；原理：USB 线插着时检测到 5555 掉线就自动 <code>adb tcpip 5555</code> 回连）。<b>硬限制：USB 线没插电脑时无法远程恢复（安卓安全机制）</b>。Windows 用「任务计划程序」每 1 分钟定时跑 <code>app_portal/adb_watchdog.sh</code>。装好壳后日常使用不再依赖 ADB。</div>
   </div>
 
   <div class="step">
@@ -157,11 +157,33 @@
 ./install_app.sh 某个应用.apk --yes              <span class="cmt"># 免确认</span></code></pre>
     <ul>
       <li>自动流程：读包名 → apktool 解包 → 补全相对类名 → 全局替换包名 → 重打包 → 签名 → 安装 → 5 秒启动验证</li>
-      <li>槽位规则：一个槽位 = 一个固件认识且未装的包名（如 <code>com.lavamusic.me.rank</code>）；<b>不要用自造包名</b>，必被杀</li>
+      <li>槽位规则：一个槽位 = 一个固件认识且未装的包名；<b>不要用自造包名</b>，必被杀</li>
       <li>槽位用完就卸一个不用的应用腾出包名；加壳 APK（dex2c / 360 / 乐固 / <b>爱加密 ijiami</b> 等）重签后必崩，不能用此流程——脚本已内置加固检测，命中会警告</li>
       <li>加固 APK 替代方案：改用<b>网页版</b>（实测案例：有谱么 APK 必崩，把官网地址加进应用台「系统设置」入口用 Via 打开）</li>
       <li>普通设备（无白名单固件）直接 <code>adb install -r xx.apk</code></li>
     </ul>
+    <p style="margin-top:12px"><b>固件白名单全部包名</b>（逆向桌面 <code>LauncherUtil.ALL_APP</code> 硬编码名单，共 38 个；状态为 2026-10-28 实测）：</p>
+    <table>
+      <tr><th>分类</th><th>包名</th><th>说明 / 状态</th></tr>
+      <tr><td rowspan="3"><b>测试类槽位</b><br>（首选，实测可用）</td><td><code>com.ayst.stresstest</code></td><td>压力测试。<b>空闲</b>，优酷槽位版曾用 ✅</td></tr>
+      <tr><td><code>com.lava.spitest</code></td><td>SPI 测试。<b>已占用</b>：影视仓</td></tr>
+      <tr><td><code>com.lava.music.me.loop.music.test</code></td><td>循环播放测试。<b>已占用</b>：小白文件管理器</td></tr>
+      <tr><td rowspan="2"><b>测试类槽位</b><br>（空闲未实测）</td><td><code>com.lavamusic.factory.cpufinder</code></td><td>CPU 检测工具。<b>空闲</b></td></tr>
+      <tr><td><code>com.lavamusic.me.screendetection</code></td><td>屏幕检测。<b>空闲</b></td></tr>
+      <tr><td rowspan="10"><b>固件应用名</b><br>（本机未装，<br>可当槽位未实测）</td><td><code>com.lavamusic.me.drummer</code></td><td>架子鼓</td></tr>
+      <tr><td><code>com.lavamusic.me.flash</code></td><td>点歌/刷歌</td></tr>
+      <tr><td><code>com.lavamusic.me.mymusic</code></td><td>我的音乐</td></tr>
+      <tr><td><code>com.lavamusic.me.recorder</code></td><td>录音</td></tr>
+      <tr><td><code>com.lavamusic.me.smart</code></td><td>智能陪练</td></tr>
+      <tr><td><code>com.lavamusic.me.studiotrainer</code></td><td>陪练</td></tr>
+      <tr><td><code>com.lavamusic.me.home</code></td><td>（谨慎：名字像桌面组件）</td></tr>
+      <tr><td><code>com.lavamusic.me.jam</code></td><td>即兴演奏</td></tr>
+      <tr><td><code>com.lavamusic.me.mvsearcher</code></td><td>MV 搜索</td></tr>
+      <tr><td><code>com.lavamusic.linkphone</code></td><td>连手机</td></tr>
+      <tr><td><b>已占用·勿动</b></td><td colspan="2"><code>com.lavamusic.me.tuner / tempo / daw / drummer(空) / effecter / myalbum / loop / browser / appcenter / setting / studiocommunity / studiotabs / update / user / vision / activation / keyboard / launcher / guide / logcollecteur / configinit</code> 等为固件在用应用，卸了会丢功能；<code>com.android.*</code> 系统包名勿用</td></tr>
+      <tr><td><b>⚠️ 实测被杀</b></td><td colspan="2"><code>com.lavamusic.me.rank</code>、<code>com.test.abc</code>（虽在名单或曾可用，实测被强杀，勿再使用）</td></tr>
+    </table>
+    <div class="tip"><b>约定：以后装任何第三方应用都用本步槽位方式</b>（<code>./install_app.sh xx.apk</code> 自动挑空槽位，跳过已占用）。安装前先看上表：优先用「测试类槽位」里的空闲包名。</div>
   </div>
 
   <div class="step">
@@ -177,7 +199,7 @@
     <h2><span class="n">?</span>常见问题</h2>
     <details><summary>应用台打开白屏 / 转圈（换网络后打不开）</summary><p>电脑服务没起（<code>lsof -i:8900</code> 或任务管理器查 python）；电脑 IP 变了<b>不用重装壳</b>——断连时壳会自动弹出改地址界面，或设置 → 服务器地址 → <code>📡 自动获取</code> → 保存并重连。</p></details>
     <details><summary>设置的壁纸老被每日一图覆盖</summary><p>设置 → 壁纸 → 打开<b>「锁定壁纸」</b>；点「恢复每日一图」会自动解锁。</p></details>
-    <details><summary>设备重启后 5555 连不上</summary><p>固件级限制：USB 调试开关打开应用台会自动恢复（需已授权），但 5555 端口必须插 USB 跑一次 <code>./setup.sh device</code>。</p></details>
+    <details><summary>设备重启后 5555 连不上</summary><p>固件级限制：USB 调试开关打开应用台会自动恢复（需已授权）；5555 端口装一次看门狗 <code>./setup.sh watchdog</code>（macOS LaunchAgent，每 20 秒检查，Mac 重启也自动运行）——只要 <b>USB 线插着电脑</b>，20 秒内自动恢复，不用敲命令。线拔了就无法远程恢复（安卓安全机制，无 root 绕不开）。没装看门狗时：插 USB 跑 <code>./setup.sh device</code>。</p></details>
     <details><summary>覆盖安装失败（签名不一致）</summary><p><code>adb uninstall &lt;包名&gt;</code> 后重装；原应用可从 backup/ 装回。</p></details>
     <details><summary>电脑重启后</summary><p>手动跑一次 <code>./setup.sh serve -d</code>（Windows 在 Git Bash 里跑）。</p></details>
   </div>
