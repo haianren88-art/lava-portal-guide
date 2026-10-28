@@ -53,7 +53,7 @@
 <div class="wrap">
   <header>
     <h1>LAVA STUDIO 应用台 · <span>五步复刻指南</span></h1>
-    <p>把任意一台全新 LAVA STUDIO 做成全屏应用台 —— 壳模式免 ADB、壁纸库、强杀应用、四款屏保时钟、新装软件自动上架</p>
+    <p>把任意一台全新 LAVA STUDIO 做成全屏应用台 —— 壳模式免 ADB、换网络免重装、壁纸锁定、强杀应用、四款屏保时钟、新装软件自动上架</p>
     <div class="badges">
       <div class="badge"><b>✓</b> 实测通过</div>
       <div class="badge">macOS / Windows 双平台</div>
@@ -123,9 +123,10 @@
       </li>
     </ol>
     <ul>
-      <li>壁纸：必应每日 / 10 张内置 / 手机扫码上传，网格切换、可删上传</li>
+      <li>壁纸：必应每日 / 10 张内置 / 手机扫码上传，网格切换、可删上传；<b>锁定壁纸</b>开关（锁定后每日一图不会覆盖你的选择）</li>
       <li>我的最爱居中置顶，长按图标快速加/删；「全部应用」「系统设置」折叠展开</li>
       <li>强杀应用：两段确认强制结束进程，运行中应用红框高亮</li>
+      <li>设置面板排序：我的最爱 / 强杀应用在前，服务器地址 / 壁纸 / 屏保依次在后</li>
       <li>屏保：5/10/20/30 分钟、1 小时可选；遮罩三档；四款时钟（翻页 / 极简数字 / 表盘 / 中文文字钟），24 小时制</li>
       <li>启动三级兜底（壳桥 → ADB → 系统 intent）；RK3399 级性能优化；页面 30 秒自动更新</li>
     </ul>
@@ -141,6 +142,8 @@
       <li>非交互：<code>./setup.sh shell --pkg com.apple.android.music --ip 192.168.31.36</code></li>
       <li>顶替其他系统应用：把 <code>--pkg</code> 换成设备上已存在的包名</li>
       <li>还原原版：<code>adb install -r backup/com.apple.android.music-&lt;时间&gt;.apk</code></li>
+      <li><b>换网络不用重装壳</b>：电脑 IP 变了，断连时壳会自动弹出改地址界面（已预填当前地址）；
+          或设置 → 服务器地址 → <code>📡 自动获取</code> → 保存并重连，地址永久保存</li>
       <li>注意：部分定制桌面按包名硬编码图标名，改壳显示名不会生效（不影响使用）</li>
     </ul>
   </div>
@@ -155,7 +158,8 @@
     <ul>
       <li>自动流程：读包名 → apktool 解包 → 补全相对类名 → 全局替换包名 → 重打包 → 签名 → 安装 → 5 秒启动验证</li>
       <li>槽位规则：一个槽位 = 一个固件认识且未装的包名（如 <code>com.lavamusic.me.rank</code>）；<b>不要用自造包名</b>，必被杀</li>
-      <li>槽位用完就卸一个不用的应用腾出包名；加壳 APK（dex2c / 360 / 乐固等）重签后必崩，不能用此流程</li>
+      <li>槽位用完就卸一个不用的应用腾出包名；加壳 APK（dex2c / 360 / 乐固 / <b>爱加密 ijiami</b> 等）重签后必崩，不能用此流程——脚本已内置加固检测，命中会警告</li>
+      <li>加固 APK 替代方案：改用<b>网页版</b>（实测案例：有谱么 APK 必崩，把官网地址加进应用台「系统设置」入口用 Via 打开）</li>
       <li>普通设备（无白名单固件）直接 <code>adb install -r xx.apk</code></li>
     </ul>
   </div>
@@ -171,7 +175,8 @@
 
   <div class="step">
     <h2><span class="n">?</span>常见问题</h2>
-    <details><summary>应用台打开白屏 / 转圈</summary><p>电脑服务没起（<code>lsof -i:8900</code> 或任务管理器查 python），或电脑 IP 变了（路由器 DHCP 固定电脑 IP；或重跑 <code>./setup.sh shell --ip 新IP</code>）。</p></details>
+    <details><summary>应用台打开白屏 / 转圈（换网络后打不开）</summary><p>电脑服务没起（<code>lsof -i:8900</code> 或任务管理器查 python）；电脑 IP 变了<b>不用重装壳</b>——断连时壳会自动弹出改地址界面，或设置 → 服务器地址 → <code>📡 自动获取</code> → 保存并重连。</p></details>
+    <details><summary>设置的壁纸老被每日一图覆盖</summary><p>设置 → 壁纸 → 打开<b>「锁定壁纸」</b>；点「恢复每日一图」会自动解锁。</p></details>
     <details><summary>设备重启后 5555 连不上</summary><p>固件级限制：USB 调试开关打开应用台会自动恢复（需已授权），但 5555 端口必须插 USB 跑一次 <code>./setup.sh device</code>。</p></details>
     <details><summary>覆盖安装失败（签名不一致）</summary><p><code>adb uninstall &lt;包名&gt;</code> 后重装；原应用可从 backup/ 装回。</p></details>
     <details><summary>电脑重启后</summary><p>手动跑一次 <code>./setup.sh serve -d</code>（Windows 在 Git Bash 里跑）。</p></details>
